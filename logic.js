@@ -15,6 +15,7 @@ var mysql = require("mysql");
 var req = require("request");
 var cons = require("./constants");
 var crypto = require('crypto');
+var moment = require('moment');
 var pool = mysql.createPool({
 		host:cons.host,
 		user:cons.user,
@@ -135,7 +136,8 @@ var getUrl = function(segment, request, response){
 var addUrl = function(url, request, response, vanity){
 	pool.getConnection(function(err, con){
 		if(url){
-			url = decodeURIComponent(url).toLowerCase();
+			//url = decodeURIComponent(url).toLowerCase();
+			url = decodeURIComponent(url);
 			con.query(cons.check_ip_query.replace("{IP}", con.escape(getIP(request))), function(err, rows){
 				if(err){
 					console.log(err);
@@ -183,6 +185,7 @@ var addUrl = function(url, request, response, vanity){
 //This method looks up stats of a specific short URL and sends it to the client
 var whatIs = function(url, request, response){
 	pool.getConnection(function(err, con){
+		if(err) throw err;
 		var hash = url;
 		if(!hash) hash = "";
 		hash = hash.replace(cons.root_url, "");
@@ -191,7 +194,8 @@ var whatIs = function(url, request, response){
 				response.send({result: false, url: null});
 			}
 			else{
-				response.send({result: true, url: rows[0].url, hash: hash, clicks: rows[0].num_of_clicks});
+				timeSince = moment(rows[0].datetime_added).fromNow();
+				response.send({result: true, url: rows[0].url, hash: hash, clicks: rows[0].num_of_clicks, when: timeSince});
 			}
 		});
 		con.release();

@@ -6,6 +6,7 @@
 		"body-parser": "^1.7.0",
 		"express": "3.x",
 		"mysql": "*",
-		"request": "*"
+		"request": "*",
+		"moment": "*"
 	}
 }

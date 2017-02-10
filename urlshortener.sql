@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `urls` (
   `url` varchar(1000) NOT NULL,
   `segment` varchar(15) NOT NULL,
   `datetime_added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `ip` varchar(25) NOT NULL,
+  `ip` varchar(50) NOT NULL,
   `num_of_clicks` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
