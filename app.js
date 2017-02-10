@@ -2,6 +2,8 @@ var express = require("express");
 var app = express();
 var router = require("./router");
 var con = require("./constants");
+var config = require("./config");
+
 
 app.use(express.bodyParser());
 app.use(express.urlencoded());
