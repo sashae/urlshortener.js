@@ -1,0 +1,14 @@
+services:
+  urlshortener:
+    build: .
+    ports:
+      - "3500:3500"
+    volumes:
+      - urlshortener-data:/data
+    environment:
+      - PORT=3500
+      - ROOT_URL=http://localhost:3500/
+    restart: unless-stopped
+
+volumes:
+  urlshortener-data:

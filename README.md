@@ -10,6 +10,18 @@ Original credit: <https://ducode.org/url-shortener-in-node-js-express-js-mysql-t
 
 The SQLite database is created automatically on first run.
 
+### Run with Docker Compose
+
+```
+docker compose up -d
+```
+
+Edit the `environment` section in `docker-compose.yml` to customize settings. To stop:
+
+```
+docker compose down
+```
+
 ### Run with Docker
 
 Build the image:
