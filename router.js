@@ -1,19 +1,10 @@
-	var logic = require('./logic');
-	var route = function(app){
-		app.get('/add', function(request, response){
-			var url = request.param('url');
-			var vanity = request.param('vanity');
-			logic.addUrl(url, request, response, vanity);
-		});
-		
-		app.get('/whatis', function(request, response){
-			var url = request.param('url');
-			logic.whatIs(url, request, response);
-		});
-		
-		app.get('/:segment', function(request, response){
-			logic.getUrl(request.params.segment, request, response);
-		});
-	}
+const express = require('express');
+const logic = require('./logic');
 
-	exports.route = route;
+const router = express.Router();
+
+router.post('/add', logic.addUrl);
+router.get('/whatis/:segment', logic.whatIs);
+router.get('/:segment', logic.getUrl);
+
+module.exports = router;

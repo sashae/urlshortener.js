@@ -1,12 +1,27 @@
-var express = require("express");
-var app = express();
-var router = require("./router");
-var con = require("./constants");
+const config = require('./config');
+const express = require('express');
+const db = require('./db');
+const router = require('./router');
 
-app.use(express.bodyParser());
-app.use(express.urlencoded());
+const app = express();
+
+app.set('trust proxy', true);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(router);
 
-app.listen(3500);
-console.log("Started listening at port 3500");
-router.route(app);
+const server = app.listen(config.port, () => {
+  console.log(`URL shortener listening on port ${config.port}`);
+});
+
+function shutdown() {
+  console.log('Shutting down...');
+  server.close(() => {
+    db.close();
+    console.log('Closed database and server.');
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
