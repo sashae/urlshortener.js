@@ -27,7 +27,7 @@ docker compose down
 Build the image:
 
 ```
-docker build -t urlshortener .
+docker buildx build -t urlshortener .
 ```
 
 Run it:
