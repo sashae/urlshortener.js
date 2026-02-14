@@ -1,3 +1,4 @@
+const path = require('path');
 const config = require('./config');
 const express = require('express');
 const db = require('./db');
@@ -8,6 +9,7 @@ const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(router);
 
 const server = app.listen(config.port, () => {
