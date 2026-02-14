@@ -162,7 +162,42 @@ function getUrl(req, res) {
   const row = db.getUrlBySegment(segment);
 
   if (!row) {
-    return res.status(404).json({ error: 'Short link not found' });
+    return res.status(404).send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PLAYER NOT FOUND</title>
+  <style>
+    @font-face {
+      font-family: 'Offlig';
+      src: url('/fonts/Offlig-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Offlig';
+      src: url('/fonts/Offlig-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    body { background: #000; color: #00cc88; font-family: 'Offlig', 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    h1 { font-size: 4rem; font-weight: 700; margin: 0; text-shadow: 0 0 20px rgba(0,204,136,0.5); }
+    .subtitle { font-size: 1.2rem; margin-top: 1rem; color: #009966; }
+    .prompt { margin-top: 2rem; font-size: 1.1rem; animation: blink 1.5s step-end infinite; }
+    .prompt a { color: #00cc88; text-decoration: none; }
+    .prompt a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>PLAYER NOT FOUND</h1>
+  <p class="subtitle">NO SAVE FILE FOR THIS LEVEL</p>
+  <p class="prompt"><a href="/shorten">CONTINUE? &gt;</a></p>
+</body>
+</html>`);
   }
 
   if (row.expires_at && new Date(row.expires_at + 'Z') < new Date()) {
@@ -172,8 +207,6 @@ function getUrl(req, res) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GAME OVER</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <style>
     @font-face {
       font-family: 'Offlig';
@@ -182,9 +215,17 @@ function getUrl(req, res) {
       font-style: normal;
       font-display: swap;
     }
-    body { background: #000; color: #00ff00; font-family: 'Offlig', 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    h1 { font-size: 4rem; margin: 0; }
-    p { font-size: 1.2rem; margin-top: 1rem; }
+    @font-face {
+      font-family: 'Offlig';
+      src: url('/fonts/Offlig-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    body { background: #000; color: #00cc88; font-family: 'Offlig', 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    h1 { font-size: 4rem; font-weight: 700; margin: 0; text-shadow: 0 0 20px rgba(0,204,136,0.5); }
+    p { font-size: 1.2rem; margin-top: 1rem; animation: blink 2s step-end infinite; }
   </style>
 </head>
 <body>
@@ -269,6 +310,8 @@ function stats(req, res) {
     </tr>`;
   }).join('\n');
 
+  const hostname = (() => { try { return new URL(config.rootUrl).hostname; } catch { return config.rootUrl; } })();
+
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -293,19 +336,24 @@ function stats(req, res) {
       font-style: normal;
       font-display: swap;
     }
-    body { font-family: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #f5f5f5; color: #333; }
-    h1 { margin-bottom: 1rem; font-weight: 700; }
+    body { font-family: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #111; color: #e0e0e0; }
+    .header h1 { font-family: 'Offlig', 'Courier New', monospace; font-weight: 700; font-size: 2.2rem; margin: 0; color: #e0e0e0; }
+    .header .subtitle { font-family: 'Offlig', 'Courier New', monospace; font-size: 1rem; color: #777; margin-top: 0.25rem; }
+    nav { margin-bottom: 1rem; }
+    nav a { color: #00cc88; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    .header { margin-bottom: 1.5rem; }
     .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #333; color: #fff; position: sticky; top: 0; font-weight: 600; }
-    tr:hover { background: #f9f9f9; }
+    table { border-collapse: collapse; width: 100%; background: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #333; }
+    th { background: #222; color: #e0e0e0; position: sticky; top: 0; font-weight: 600; }
+    tr:hover { background: #252525; }
     td { font-family: 'Offlig', 'Courier New', monospace; }
-    td a { color: #0066cc; text-decoration: none; word-break: break-all; }
+    td a { color: #00cc88; text-decoration: none; word-break: break-all; }
     td a:hover { text-decoration: underline; }
     .count { text-align: center; }
     td:nth-child(4) { text-align: center; }
-    .empty { text-align: center; padding: 2rem; color: #999; font-family: 'Archivo', sans-serif; }
+    .empty { text-align: center; padding: 2rem; color: #777; font-family: 'Archivo', sans-serif; }
     @media (max-width: 768px) {
       body { margin: 1rem; }
       th, td { padding: 0.5rem 0.6rem; font-size: 0.85rem; }
@@ -313,7 +361,11 @@ function stats(req, res) {
   </style>
 </head>
 <body>
-  <h1>URL Shortener Stats</h1>
+  <nav><a href="/shorten">&rarr; Shorten an URL</a></nav>
+  <div class="header">
+    <h1>${escapeHtml(hostname)}</h1>
+    <div class="subtitle">url shortener stats</div>
+  </div>
   <div class="table-wrapper">
     <table>
       <thead>
@@ -390,24 +442,39 @@ function shorten(req, res) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shorten a URL</title>
+  <title>Shorten an URL</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #f5f5f5; color: #333; }
-    h1 { margin-bottom: 1rem; font-weight: 700; }
-    form { background: #fff; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 500px; }
+    @font-face {
+      font-family: 'Offlig';
+      src: url('/fonts/Offlig-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Offlig';
+      src: url('/fonts/Offlig-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    body { font-family: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #111; color: #e0e0e0; }
+    h1 { margin-bottom: 1rem; font-weight: 700; font-family: 'Offlig', 'Courier New', monospace; font-size: 1.8rem; }
+    form { background: #1a1a1a; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); max-width: 500px; }
     label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
-    input[type="text"], input[type="url"], input[type="number"] { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
-    button { background: #333; color: #fff; border: none; padding: 0.6rem 1.5rem; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-    button:hover { background: #555; }
+    input[type="text"], input[type="url"], input[type="number"] { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #444; border-radius: 4px; font-size: 1rem; box-sizing: border-box; background: #222; color: #e0e0e0; }
+    input::placeholder { color: #777; }
+    button { background: #00cc88; color: #111; border: none; padding: 0.6rem 1.5rem; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+    button:hover { background: #00e699; }
     #result { margin-top: 1rem; max-width: 500px; }
-    .success { background: #e6ffe6; padding: 1rem; border-radius: 6px; }
-    .success a { color: #0066cc; font-weight: 600; word-break: break-all; }
-    .error { background: #ffe6e6; padding: 1rem; border-radius: 6px; color: #c00; }
+    .success { background: rgba(0,204,136,0.1); border: 1px solid #00cc88; padding: 1rem; border-radius: 6px; }
+    .success a { color: #00cc88; font-weight: 600; word-break: break-all; }
+    .error { background: rgba(204,0,0,0.1); border: 1px solid #cc0000; padding: 1rem; border-radius: 6px; color: #ff6666; }
     nav { margin-bottom: 1rem; }
-    nav a { color: #0066cc; text-decoration: none; }
+    nav a { color: #00cc88; text-decoration: none; }
     nav a:hover { text-decoration: underline; }
     @media (max-width: 768px) {
       body { margin: 1rem; }
@@ -416,7 +483,7 @@ function shorten(req, res) {
 </head>
 <body>
   <nav><a href="/stats">&larr; Stats</a></nav>
-  <h1>Shorten a URL</h1>
+  <h1>Shorten an URL</h1>
   <form id="shorten-form">
     <label for="url">URL to shorten</label>
     <input type="url" id="url" name="url" placeholder="https://example.com" required>
