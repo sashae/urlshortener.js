@@ -83,8 +83,21 @@ Content-Type: application/json
 GET /:segment
 ```
 
+Returns a 302 redirect to the original URL. If the short link doesn't exist, shows a retro "PLAYER NOT FOUND" 404 page. If the link has expired, shows a "GAME OVER" 410 page.
+
 ### Stats
 
 ```
 GET /whatis/:segment
 ```
+
+Returns JSON with the original URL, click count, and creation date.
+
+## Pages
+
+| Route | Description |
+|---|---|
+| `/stats` | Dark-themed dashboard showing all shortened URLs with click counts, creation dates, and expiration info. Displays the server hostname in the header. Auto-refreshes every 3 seconds. |
+| `/shorten` | Dark-themed form to create a new short URL with optional vanity code and expiration. |
+| `/:segment` (not found) | Retro "PLAYER NOT FOUND" page with a link to `/shorten`. |
+| `/:segment` (expired) | Retro "GAME OVER" page with blinking text. |
