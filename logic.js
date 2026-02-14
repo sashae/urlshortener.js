@@ -166,7 +166,7 @@ function getUrl(req, res) {
     console.error('Failed to record click:', err.message);
   }
 
-  res.redirect(301, row.url);
+  res.redirect(302, row.url);
 }
 
 function whatIs(req, res) {
