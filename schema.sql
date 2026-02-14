@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS urls (
   segment TEXT NOT NULL UNIQUE,
   created_at TEXT DEFAULT (datetime('now')),
   ip TEXT NOT NULL,
-  click_count INTEGER DEFAULT 0
+  click_count INTEGER DEFAULT 0,
+  title TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS stats (

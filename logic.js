@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const db = require('./db');
 const config = require('./config');
 
-const RESERVED_SEGMENTS = new Set(['add', 'whatis']);
+const RESERVED_SEGMENTS = new Set(['add', 'whatis', 'stats']);
 const MAX_RETRIES = 3;
 
 function generateSegment() {
@@ -100,17 +100,27 @@ function addUrl(req, res) {
   const timeout = setTimeout(() => controller.abort(), 5000);
 
   fetch(url, { method: 'GET', signal: controller.signal, redirect: 'follow' })
-    .then((fetchRes) => {
+    .then(async (fetchRes) => {
       clearTimeout(timeout);
       if (fetchRes.status >= 400) {
         return res.status(400).json({ error: 'The URL is not reachable' });
       }
 
+      let title = '';
+      try {
+        const contentType = fetchRes.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+          const body = await fetchRes.text();
+          const match = body.match(/<title[^>]*>([^<]+)<\/title>/i);
+          if (match) title = match[1].trim();
+        }
+      } catch {}
+
       if (!segment) {
         for (let i = 0; i < MAX_RETRIES; i++) {
           const candidate = generateSegment();
           try {
-            const row = db.insertUrl(url, candidate, ip);
+            const row = db.insertUrl(url, candidate, ip, title);
             return res.status(201).json({ url: config.rootUrl + row.segment, segment: row.segment });
           } catch (err) {
             if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' && i < MAX_RETRIES - 1) {
@@ -121,7 +131,7 @@ function addUrl(req, res) {
         }
       } else {
         try {
-          const row = db.insertUrl(url, segment, ip);
+          const row = db.insertUrl(url, segment, ip, title);
           return res.status(201).json({ url: config.rootUrl + row.segment, segment: row.segment });
         } catch (err) {
           if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -177,4 +187,75 @@ function whatIs(req, res) {
   });
 }
 
-module.exports = { addUrl, getUrl, whatIs };
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'Never';
+  const d = new Date(dateStr + 'Z');
+  return d.toLocaleString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function stats(req, res) {
+  const rows = db.getAllStats();
+
+  const tableRows = rows.map((row) => {
+    const title = escapeHtml(row.title || '');
+    const displayTitle = title || '<em>Untitled</em>';
+    const shortUrl = config.rootUrl + row.segment;
+    return `<tr>
+      <td><a href="${escapeHtml(row.url)}">${escapeHtml(row.url)}</a></td>
+      <td>${displayTitle}</td>
+      <td><a href="${escapeHtml(shortUrl)}">${escapeHtml(row.segment)}</a></td>
+      <td>${row.click_count}</td>
+      <td>${formatDate(row.created_at)}</td>
+      <td>${row.last_clicked_at ? formatDate(row.last_clicked_at) : 'Never'}</td>
+    </tr>`;
+  }).join('\n');
+
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL Shortener Stats</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #f5f5f5; color: #333; }
+    h1 { margin-bottom: 1rem; }
+    table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #333; color: #fff; position: sticky; top: 0; }
+    tr:hover { background: #f9f9f9; }
+    td a { color: #0066cc; text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    .count { text-align: center; }
+    td:nth-child(4) { text-align: center; }
+    .empty { text-align: center; padding: 2rem; color: #999; }
+  </style>
+</head>
+<body>
+  <h1>URL Shortener Stats</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Original URL</th>
+        <th>Title</th>
+        <th>Short Link</th>
+        <th>Clicks</th>
+        <th>Created</th>
+        <th>Last Clicked</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows || '<tr><td colspan="6" class="empty">No URLs yet</td></tr>'}
+    </tbody>
+  </table>
+</body>
+</html>`);
+}
+
+module.exports = { addUrl, getUrl, whatIs, stats };

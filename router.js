@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post('/add', logic.addUrl);
 router.get('/whatis/:segment', logic.whatIs);
+router.get('/stats', logic.stats);
 router.get('/:segment', logic.getUrl);
 
 module.exports = router;
