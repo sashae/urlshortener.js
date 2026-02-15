@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS urls (
   created_at TEXT DEFAULT (datetime('now')),
   ip TEXT NOT NULL,
   click_count INTEGER DEFAULT 0,
-  title TEXT DEFAULT ''
+  title TEXT DEFAULT '',
+  og_image TEXT DEFAULT '',
+  og_description TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS stats (

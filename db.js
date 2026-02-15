@@ -25,10 +25,24 @@ try {
   // Column already exists, ignore
 }
 
+// Add og_image column for existing databases
+try {
+  db.exec("ALTER TABLE urls ADD COLUMN og_image TEXT DEFAULT ''");
+} catch (err) {
+  // Column already exists, ignore
+}
+
+// Add og_description column for existing databases
+try {
+  db.exec("ALTER TABLE urls ADD COLUMN og_description TEXT DEFAULT ''");
+} catch (err) {
+  // Column already exists, ignore
+}
+
 const stmts = {
   getUrlBySegment: db.prepare('SELECT * FROM urls WHERE segment = ?'),
   getUrlByUrl: db.prepare('SELECT * FROM urls WHERE url = ?'),
-  insertUrl: db.prepare('INSERT INTO urls (url, segment, ip, title, expires_at) VALUES (?, ?, ?, ?, ?)'),
+  insertUrl: db.prepare('INSERT INTO urls (url, segment, ip, title, expires_at, og_image, og_description) VALUES (?, ?, ?, ?, ?, ?, ?)'),
   countRecentUrlsByIp: db.prepare(
     "SELECT COUNT(*) AS count FROM urls WHERE ip = ? AND created_at >= datetime('now', '-1 hour')"
   ),
@@ -53,8 +67,8 @@ module.exports = {
     return stmts.getUrlByUrl.get(url);
   },
 
-  insertUrl(url, segment, ip, title, expiresAt) {
-    const info = stmts.insertUrl.run(url, segment, ip, title || '', expiresAt || null);
+  insertUrl(url, segment, ip, title, expiresAt, ogImage, ogDescription) {
+    const info = stmts.insertUrl.run(url, segment, ip, title || '', expiresAt || null, ogImage || '', ogDescription || '');
     return { id: info.lastInsertRowid, url, segment, ip };
   },
 

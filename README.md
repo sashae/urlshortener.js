@@ -85,6 +85,8 @@ GET /:segment
 
 Returns a 302 redirect to the original URL. If the short link doesn't exist, shows a retro "PLAYER NOT FOUND" 404 page. If the link has expired, shows a "GAME OVER" 410 page.
 
+When a bot user agent is detected (Discord, Slack, Twitter, Facebook, LinkedIn, WhatsApp, Telegram), the server responds with an HTML page containing Open Graph meta tags instead of a 302 redirect. The `og:title` is prefixed with `[redirect]` and the destination's `og:image` and `og:description` are passed through. A `<meta http-equiv="refresh">` tag provides a fallback redirect. OG metadata is extracted and stored at link creation time.
+
 ### Stats
 
 ```

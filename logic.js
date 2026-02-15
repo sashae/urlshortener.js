@@ -3,6 +3,7 @@ const db = require('./db');
 const config = require('./config');
 
 const RESERVED_SEGMENTS = new Set(['add', 'whatis', 'stats', 'shorten']);
+const BOT_UA = /Discordbot|Slackbot|Twitterbot|facebookexternalhit|LinkedInBot|WhatsApp|TelegramBot/i;
 const MAX_RETRIES = 3;
 
 function generateSegment() {
@@ -114,12 +115,18 @@ function addUrl(req, res) {
       }
 
       let title = '';
+      let ogImage = '';
+      let ogDescription = '';
       try {
         const contentType = fetchRes.headers.get('content-type') || '';
         if (contentType.includes('text/html')) {
           const body = await fetchRes.text();
-          const match = body.match(/<title[^>]*>([^<]+)<\/title>/i);
-          if (match) title = match[1].trim();
+          const titleMatch = body.match(/<title[^>]*>([^<]+)<\/title>/i);
+          if (titleMatch) title = titleMatch[1].trim();
+          const imageMatch = body.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]*)"[^>]*>/i);
+          if (imageMatch) ogImage = imageMatch[1].trim();
+          const descMatch = body.match(/<meta\s+(?:property|name)="og:description"\s+content="([^"]*)"[^>]*>/i);
+          if (descMatch) ogDescription = descMatch[1].trim();
         }
       } catch {}
 
@@ -127,7 +134,7 @@ function addUrl(req, res) {
         for (let i = 0; i < MAX_RETRIES; i++) {
           const candidate = generateSegment();
           try {
-            const row = db.insertUrl(url, candidate, ip, title, expiresAt);
+            const row = db.insertUrl(url, candidate, ip, title, expiresAt, ogImage, ogDescription);
             return res.status(201).json({ url: config.rootUrl + row.segment, segment: row.segment });
           } catch (err) {
             if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' && i < MAX_RETRIES - 1) {
@@ -138,7 +145,7 @@ function addUrl(req, res) {
         }
       } else {
         try {
-          const row = db.insertUrl(url, segment, ip, title, expiresAt);
+          const row = db.insertUrl(url, segment, ip, title, expiresAt, ogImage, ogDescription);
           return res.status(201).json({ url: config.rootUrl + row.segment, segment: row.segment });
         } catch (err) {
           if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -241,6 +248,29 @@ function getUrl(req, res) {
     db.incrementClicks(row.id);
   } catch (err) {
     console.error('Failed to record click:', err.message);
+  }
+
+  if (BOT_UA.test(req.headers['user-agent'] || '')) {
+    const ogTitle = escapeHtml('[redirect] ' + (row.title || row.url));
+    const shortUrl = config.rootUrl + row.segment;
+    let ogTags = `<meta property="og:title" content="${ogTitle}">`;
+    ogTags += `\n    <meta property="og:url" content="${escapeHtml(shortUrl)}">`;
+    if (row.og_description) {
+      ogTags += `\n    <meta property="og:description" content="${escapeHtml(row.og_description)}">`;
+    }
+    if (row.og_image) {
+      ogTags += `\n    <meta property="og:image" content="${escapeHtml(row.og_image)}">`;
+    }
+    return res.send(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    ${ogTags}
+    <meta http-equiv="refresh" content="0;url=${escapeHtml(row.url)}">
+    <title>${ogTitle}</title>
+</head>
+<body>Redirecting to <a href="${escapeHtml(row.url)}">${escapeHtml(row.url)}</a>...</body>
+</html>`);
   }
 
   res.redirect(302, row.url);
